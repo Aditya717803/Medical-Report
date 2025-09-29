@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Medical Report Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff; /* soft green background */
+            color: #1a3e2c; /* dark green text */
+            line-height: 1.6;
+        }
+
+
+        .container {
+            max-width: 1500px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+
+        .header h1 {
+            font-size: 2rem;
+            color: #12421e; /* deeper green */
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+
+        .header p {
+            color: #3c6f42; /* medium green */
+            font-size: 1rem;
+        }
+
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+
+
+        .card {
+            background: #f0faf1; /* very light green */
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(18, 66, 30, 0.1); /* green shadow */
+            border: 1px solid #afd4b0;
+        }
+
+
+        .card h2 {
+            font-size: 1.3rem;
+            color: #12421e;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+
+        .upload-area {
+            border: 2px dashed #8bc789; /* lighter green dashed */
+            border-radius: 6px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            background: #edf9ee;
+            margin-bottom: 20px;
+        }
+
+
+        .upload-area:hover {
+            border-color: #3a7440; /* darker green */
+            background: #e1f0dc;
+        }
+
+
+        .upload-area.dragover {
+            border-color: #3a7440;
+            background: #d2e9c7;
+        }
+
+
+        .upload-text {
+            font-size: 1rem;
+            color: #2e5631;
+            margin-bottom: 8px;
+        }
+
+
+        .upload-subtext {
+            font-size: 0.9rem;
+            color: #6b8b59;
+        }
+
+
+        #imagePreview {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 4px;
+            margin-top: 15px;
+            display: none;
+            box-shadow: 0 2px 8px rgba(46, 86, 49, 0.3);
+        }
+
+
+        .btn {
+            width: 100%;
+            background: #3a7440; /* dark green */
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+
+        .btn:hover:not(:disabled) {
+            background: #2e5631;
+        }
+
+
+        .btn:disabled {
+            background: #a4c59a;
+            cursor: not-allowed;
+        }
+
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #c6e2b3;
+            border-top: 3px solid #3a7440;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+
+        .loading-text {
+            color: #6b8b59;
+            font-size: 0.95rem;
+        }
+
+
+        .result {
+            display: none;
+        }
+
+
+        .result-section {
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #afd4b0;
+            overflow: hidden;
+        }
+
+
+        .result-header {
+            background: #e6f2ea;
+            padding: 15px 20px;
+            border-bottom: 1px solid #afd4b0;
+            font-weight: 600;
+            color: #12421e;
+            font-size: 1.1rem;
+        }
+
+
+        .result-content {
+            padding: 20px;
+        }
+
+
+        .extracted-text {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            background: #e6f2ea;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 3px solid #3a7440;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #12421e;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+
+        .ai-summary {
+            line-height: 1.7;
+            color: #12421e;
+        }
+
+
+        .analysis-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e6f2ea;
+            border-radius: 4px;
+            border-left: 3px solid #27ae60;
+        }
+
+
+        .analysis-item h4 {
+            color: #12421e;
+            margin-bottom: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+
+        .analysis-item p {
+            color: #3c6f42;
+            margin: 0;
+        }
+
+
+        .error-message {
+            background: #fdedec;
+            color: #c0392b;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 3px solid #e74c3c;
+            margin-top: 20px;
+            display: none;
+        }
+
+
+        .file-info {
+            font-size: 0.85rem;
+            color: #6b8b59;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💉 Medical Report Analyzer</h1>
+            <p>Upload a medical report image to get AI-powered analysis and insights</p>
+        </div>
+
+
+        <div class="main-content">
+            <!-- Upload Section -->
+            <div class="card">
+                <h2>Upload Report</h2>
+                <div class="card">
+                    <h2>Select Language</h2>
+                    <select id="languageSelect" class="btn">
+                        <option value="hi">Hindi</option>
+                        <option value="ta">Tamil</option>
+                        <option value="te">Telugu</option>
+                        <option value="kn">Kannada</option>
+                        <option value="ml">Malayalam</option>
+                        <option value="bn">Bengali</option>
+                        <option value="gu">Gujarati</option>
+                        <option value="mr">Marathi</option>
+                        <option value="pa">Punjabi</option>
+                        <option value="or">Odia</option>
+                    </select>
+                </div>
+
+
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-text">Click to upload or drag and drop</div>
+                    <div class="upload-subtext">Supports JPG, PNG formats</div>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;" />
+                    <img id="imagePreview" alt="Preview" />
+                    <div id="fileInfo" class="file-info"></div>
+                </div>
+                
+                <button class="btn" id="processBtn" disabled>Analyze Report</button>
+            </div>
+
+
+            <!-- Results Section -->
+            <div class="card">
+                <h2>Analysis Results</h2>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Processing your medical report...</div>
+                </div>
+
+
+                <div class="result" id="result">
+                    <div class="result-section">
+                        <div class="result-header">Extracted Text</div>
+                        <div class="result-content">
+                            <div id="extractedText" class="extracted-text"></div>
+                        </div>
+                    </div>
+
+
+                    <div class="result-section">
+                        <div class="result-header">AI Analysis</div>
+                        <div class="result-content">
+                            <div id="aiSummary" class="ai-summary"></div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div id="errorMessage" class="error-message">
+                    <strong>Error:</strong> <span id="errorText"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const fileInfo = document.getElementById('fileInfo');
+        const processBtn = document.getElementById('processBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const extractedTextDiv = document.getElementById('extractedText');
+        const aiSummaryDiv = document.getElementById('aiSummary');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+
+        let selectedFile = null;
+
+        // File selection handlers
+        uploadArea.addEventListener('click', () => imageInput.click());
+        imageInput.addEventListener('change', handleFileSelect);
+        
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFileSelect(e) {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Please select an image file (JPG, PNG)');
+                return;
+            }
+
+            selectedFile = file;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+                
+                // Show file info
+                fileInfo.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                
+                // Update upload text
+                const uploadText = uploadArea.querySelector('.upload-text');
+                const uploadSubtext = uploadArea.querySelector('.upload-subtext');
+                uploadText.textContent = 'File selected';
+                uploadSubtext.textContent = 'Ready to analyze';
+            };
+            reader.readAsDataURL(file);
+            
+            // Enable process button
+            processBtn.disabled = false;
+            hideError();
+        }
+
+        // Process button handler
+        processBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            showLoading();
+            hideError();
+
+            try {
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+                formData.append('language', document.getElementById('languageSelect').value);
+
+
+                const response = await fetch('http://localhost:8000/process-medical-report', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Processing failed');
+                }
+
+                displayResults(data);
+
+            } catch (error) {
+                showError(error.message);
+                console.error('Error:', error);
+            } finally {
+                hideLoading();
+            }
+        });
+
+        function showLoading() {
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            processBtn.disabled = true;
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+            processBtn.disabled = false;
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        function displayResults(data) {
+            // Display extracted text
+            extractedTextDiv.textContent = data.extracted_text || 'No text could be extracted from the image.';
+            
+            // Display AI analysis with simple structure
+            const aiResponse = data.ai_summary || 'No analysis available.';
+            const structuredAnalysis = parseAIResponse(aiResponse);
+            
+            aiSummaryDiv.innerHTML = structuredAnalysis;
+            
+            result.style.display = 'block';
+        }
+
+        function parseAIResponse(response) {
+            // Simple parsing - look for numbered sections or **bold** headers
+            const lines = response.split('\n').filter(line => line.trim());
+            let structuredHTML = '';
+            let currentSection = '';
+            let currentContent = [];
+
+            lines.forEach(line => {
+                line = line.trim();
+                
+                // Check if it's a header (starts with number, **, or ##)
+                if (line.match(/^(\d+\.|\*\*|##)/)) {
+                    // Save previous section
+                    if (currentSection && currentContent.length > 0) {
+                        structuredHTML += createSection(currentSection, currentContent.join(' '));
+                    }
+                    
+                    // Start new section
+                    currentSection = line.replace(/^(\d+\.|\*\*|##)\s*/, '').replace(/\*\*/g, '');
+                    currentContent = [];
+                } else if (line) {
+                    currentContent.push(line);
+                }
+            });
+
+            // Add final section
+            if (currentSection && currentContent.length > 0) {
+                structuredHTML += createSection(currentSection, currentContent.join(' '));
+            }
+
+            // If no structured content found, display as is
+            if (!structuredHTML) {
+                structuredHTML = `<div class="analysis-item"><p>${response.replace(/\n/g, '<br>')}</p></div>`;
+            }
+
+            return structuredHTML;
+        }
+
+        function createSection(title, content) {
+            return `
+                <div class="analysis-item">
+                    <h4>${title}</h4>
+                    <p>${content}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
